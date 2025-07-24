@@ -10,19 +10,20 @@ import { GlobalStyleSheet } from '../../constants/StyleSheet';
 
 
 const DATA = [
-    {
-        title: "The Natural \nBeauty Of A Jewelry Collection",
-        desc: 'Sophisticated Collection Inspired By Passion',
-    },
-    {
-        title: "The Natural \nBeauty Of A Jewelry Collection",
-        desc: 'Sophisticated Collection Inspired By Passion',
-    },
-    {
-        title: "The Natural \nBeauty Of A Jewelry Collection",
-        desc: 'Sophisticated Collection Inspired By Passion',
-    },
-]
+  {
+    title: "The Natural \nBeauty Of A Jewelry Collection",
+    desc: "Sophisticated Collection Inspired By Passion",
+  },
+  {
+    title: "Elegance Redefined \nTimeless Designs",
+    desc: "Jewelry That Celebrates Every Moment",
+  },
+  {
+    title: "Sparkle With Confidence \nShine Every Day",
+    desc: "Experience Craftsmanship Like Never Before",
+  },
+];
+
 
 
 type OnbordingScreenProps = StackScreenProps<RootStackParamList, 'Onbording'>;

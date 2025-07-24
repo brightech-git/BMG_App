@@ -66,6 +66,7 @@ const StackNavigator = () => {
 
   return (
     <>
+    
       <Stack.Navigator
         initialRouteName={"Onbording"}
         screenOptions={{

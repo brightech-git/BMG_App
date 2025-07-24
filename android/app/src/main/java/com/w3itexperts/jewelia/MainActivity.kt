@@ -1,4 +1,4 @@
-package com.w3itexperts.jewelia
+package com.w3itexperts.bmg-jewellers
 
 import android.os.Build
 import android.os.Bundle

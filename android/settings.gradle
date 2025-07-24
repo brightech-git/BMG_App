@@ -1,4 +1,4 @@
-rootProject.name = 'jewelia'
+rootProject.name = 'bmg-jewellers'
 
 dependencyResolutionManagement {
   versionCatalogs {
