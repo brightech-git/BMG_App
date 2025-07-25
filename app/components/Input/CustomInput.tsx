@@ -50,7 +50,7 @@ const CustomInput = (props) => {
                         style={[{
                             ...FONTS.font,
                             fontSize: 14,
-                            height: 53,
+                            height: 43,
                             borderWidth: 1,
                             color: colors.title,
                             borderColor:props.background ? COLORS.primary: colors.background,

@@ -9,67 +9,58 @@ import { IMAGES } from '../constants/Images';
 import { useDispatch } from 'react-redux';
 import { closeDrawer } from '../redux/actions/drawerAction';
 
-const Sidebar = ({navigation} : any) => {
+import { useState, useEffect, useContext } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { UserContext } from '../Context/ProfileContext';
+import { logoutUser } from '../Services/LoginService';
+import { Alert } from 'react-native';
+
+
+const Sidebar = ({ navigation }: any) => {
+
+    const { profileImage } = useContext(UserContext);
+    const { setProfileImage } = useContext(UserContext);
+    const [username, setUsername] = useState<string>('');
+    const [email, setEmail] = useState<string>('');
+
 
     const theme = useTheme();
-    const { colors }: {colors : any} = theme;
-
+    const { colors }: { colors: any } = theme;
     const dispatch = useDispatch();
 
-   // const navigation = useNavigation<any>();
+
+    useEffect(() => {
+        const getUserDetails = async () => {
+            try {
+
+                const username = await AsyncStorage.getItem('user_name');
+                const email = await AsyncStorage.getItem('user_email');
+
+
+                if (username) setUsername(username);
+                if (email) setEmail(email);
+            } catch (error) {
+                console.error('Error fetching user details:', error);
+            }
+        };
+
+        getUserDetails();
+    }, []);
+
+    // const navigation = useNavigation<any>();
 
     const navItem = [
-        {
-            icon: IMAGES.home,
-            name: "Home",
-            navigate: "BottomNavigation",
-        },
-        {
-            icon: IMAGES.producta,
-            name: "Products",
-            navigate: "Products",
-        },
-        {
-            icon: IMAGES.components,
-            name: "Components",
-            navigate: "Components",
-        },
-        {
-            icon: IMAGES.star,
-            name: "Review",
-            navigate: "WriteReview",
-        },
-        {
-            icon: IMAGES.heart2,
-            name: "Wishlist",
-            navigate: "Wishlist",
-        },
-        {
-            icon: IMAGES.order,
-            name: "My Orders",
-            navigate: 'Myorder',
-        },
-        {
-            icon: IMAGES.shopping2,
-            name: "My Cart",
-            navigate: 'MyCart',
-        },
-        {
-            icon: IMAGES.chat,
-            name: "Chat List",
-            navigate: 'Chat',
-        },
-        {
-            icon: IMAGES.user2,
-            name: "Profile",
-            navigate: "Profile",
-        },
-        {
-            icon: IMAGES.logout,
-            name: "Logout",
-            navigate: 'SignIn',
-        },
-    ]
+        { icon: IMAGES.home, name: "Home", navigate: "BottomNavigation" },
+        { icon: IMAGES.producta, name: "Products", navigate: "Products" },
+        // { icon: IMAGES.components, name: "Components", navigate: "Components" },
+        // { icon: IMAGES.star, name: "Review", navigate: "WriteReview" },
+        { icon: IMAGES.heart2, name: "Wishlist", navigate: "Wishlist" },
+        { icon: IMAGES.order, name: "My Orders", navigate: 'Myorder' },
+        { icon: IMAGES.shopping2, name: "My Cart", navigate: 'MyCart' },
+        // { icon: IMAGES.chat, name: "Chat List", navigate: 'Chat' },
+        { icon: IMAGES.user2, name: "Profile", navigate: "Profile" },
+        { icon: IMAGES.logout, name: "Logout", action: 'logout' }, // 👈 Add this
+    ];
 
     return (
         <>
@@ -96,11 +87,15 @@ const Sidebar = ({navigation} : any) => {
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                                     <Image
                                         style={{ height: 60, width: 60, resizeMode: 'contain', borderRadius: 20 }}
-                                        source={IMAGES.small1}
+                                        source={
+                                            profileImage
+                                                ? { uri: profileImage }
+                                                : IMAGES.user2 // Fallback default image
+                                        }
                                     />
                                     <View>
-                                        <Text style={{ ...FONTS.fontSemiBold, fontSize: 18, color: colors.title }}>Roopa</Text>
-                                        <Text style={{ ...FONTS.fontRegular, fontSize: 15, color: colors.title }}>example@gmail.com</Text>
+                                        <Text style={{ ...FONTS.fontSemiBold, fontSize: 18, color: colors.title }}>{username}</Text>
+                                        <Text style={{ ...FONTS.fontRegular, fontSize: 15, color: colors.title }}>{email}</Text>
                                     </View>
                                 </View>
                             </View>
@@ -113,11 +108,43 @@ const Sidebar = ({navigation} : any) => {
                     <View style={{ flex: 1 }}>
                         {navItem.map((data, index) => {
                             return (
+
                                 <TouchableOpacity
-                                    //onPress={() => {data.navigate && navigation.navigate(data.navigate); navigation.closeDrawer()}}
-                                    onPress={() => { data.navigate === "DrawerNavigation" ? dispatch(closeDrawer()) : dispatch(closeDrawer());  navigation.navigate(data.navigate)}}
-                                    //onPress={() => {data.navigate === "DrawerNavigation" ? dispatch(closeDrawer()) : dispatch(closeDrawer()); navigation.navigate(data.navigate)}}
                                     key={index}
+                                    onPress={async () => {
+                                        dispatch(closeDrawer());
+
+                                        if (data.action === 'logout') {
+                                            Alert.alert(
+                                                "Logout",
+                                                "Are you sure you want to logout?",
+                                                [
+                                                    {
+                                                        text: "Cancel",
+                                                        style: "cancel"
+                                                    },
+                                                    {
+                                                        text: "Logout",
+                                                        style: "destructive",
+                                                        onPress: async () => {
+                                                            try {
+                                                                await logoutUser();
+                                                                setProfileImage(null); // 👈 Reset context image
+                                                                navigation.reset({
+                                                                    index: 0,
+                                                                    routes: [{ name: 'SignIn' }],
+                                                                });
+                                                            } catch (error) {
+                                                                console.error('Logout failed:', error);
+                                                            }
+                                                        }
+                                                    }
+                                                ]
+                                            );
+                                        } else if (data.navigate) {
+                                            navigation.navigate(data.navigate);
+                                        }
+                                    }}
                                     style={{
                                         flexDirection: 'row',
                                         alignItems: 'center',
@@ -127,7 +154,7 @@ const Sidebar = ({navigation} : any) => {
                                 >
                                     <View
                                         style={[{
-                                            shadowColor:theme.dark ? "#000": "rgba(195, 123, 95, 0.20)",
+                                            shadowColor: theme.dark ? "#000" : "rgba(195, 123, 95, 0.20)",
                                             shadowOffset: {
                                                 width: 3,
                                                 height: 10,
@@ -137,12 +164,12 @@ const Sidebar = ({navigation} : any) => {
                                             marginRight: 15,
                                         }, Platform.OS === "ios" && {
                                             backgroundColor: colors.card,
-                                            borderRadius:10
+                                            borderRadius: 10
                                         }]}
                                     >
-                                        <View style={{ height:40,width:40,alignItems:'center',justifyContent:'center',backgroundColor:colors.card,borderRadius:10 }}>
+                                        <View style={{ height: 40, width: 40, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.card, borderRadius: 10 }}>
                                             <Image
-                                                style={{ height: 20, width: 20, resizeMode: 'contain', tintColor:COLORS.primary }}
+                                                style={{ height: 20, width: 20, resizeMode: 'contain', tintColor: COLORS.primary }}
                                                 source={data.icon}
                                             />
                                         </View>
