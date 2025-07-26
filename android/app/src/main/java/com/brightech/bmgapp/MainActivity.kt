@@ -1,4 +1,4 @@
-package com.w3itexperts.bmg-jewellers
+package com.brightech.bmgapp
 
 import android.os.Build
 import android.os.Bundle
