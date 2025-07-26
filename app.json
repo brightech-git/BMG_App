@@ -1,14 +1,14 @@
 {
   "expo": {
     "name": "BMG-Jewellers",
-    "slug": "bmg-jewellers",
+    "slug": "bmg-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon2.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash2.png",
-      "resizeMode":"cover",
+      "resizeMode": "cover",
       "backgroundColor": "#70747D"
     },
     "assetBundlePatterns": [
@@ -28,14 +28,18 @@
         "foregroundImage": "./assets/adaptive-icon2.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.w3itexperts.bmg-jewellers"
+     "package": "com.brightech.bmgapp",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon2.png"
     },
     "extra": {
       "eas": {
-        "projectId": "df01eda5-b046-4c48-9f97-6ea0e3e42927"
+        "projectId": "9f22d4bd-dfd6-4aa9-8c6b-563b7595e083"
       }
     },
     "plugins": [
@@ -53,6 +57,7 @@
           "initialOrientation": "DEFAULT"
         }
       ]
-    ]
+    ],
+    "owner": "brightechsoftware"
   }
 }
