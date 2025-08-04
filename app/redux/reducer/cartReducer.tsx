@@ -1,39 +1,94 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { cartService } from '../../Services/CartService';
 
-export const cartSlice = createSlice({
-    name: "cart",
-    initialState: {
-        cart: [],
-    },
-    reducers:{
-        addToCart : (state:any,action:any) => {
-            const itemInCart = state.cart.find((item:any) => item.id == action.payload.id);
-            if(itemInCart){
-                itemInCart.quantity++;
-            }else{
-                state.cart.push({...action.payload,quantity:1})
-            }
-        },
-        removeFromCart:(state:any,action:any) => {
-            const removeFromCart = state.cart.filter((item:any) => item.id !== action.payload.id);
-            state.cart = removeFromCart;
-        },
-        incrementQuantity : (state:any,action:any) => {
-            const itemInCart = state.cart.find((item:any) => item.id == action.payload.id);
-            itemInCart.quantity++;
-        },
-        decrementQuantity : (state:any,action:any) => {
-            const itemInCart = state.cart.find((item:any) => item.id == action.payload.id);
-            if(itemInCart.quantity == 1){
-                const removeFromCart = state.cart.filter((item:any) => item.id !== action.payload.id);
-                state.cart = removeFromCart;
-            }else{
-                itemInCart.quantity--;
-            }
-        }
+// Thunks
+export const fetchCartItems = createAsyncThunk(
+  'cart/fetchCartItems',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await cartService.getItemsByPhone();
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch cart items');
     }
-});
+  }
+);
 
-export const {addToCart,removeFromCart,incrementQuantity,decrementQuantity} = cartSlice.actions;
+export const addItemToCart = createAsyncThunk(
+  'cart/addItemToCart',
+  async (item: any, { dispatch, rejectWithValue }) => {
+    try {
+      await cartService.addItem(item);
+      dispatch(fetchCartItems());
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to add item to cart');
+    }
+  }
+);
+
+export const removeItemFromCart = createAsyncThunk(
+  'cart/removeItemFromCart',
+  async (sno: number, { dispatch, rejectWithValue }) => {
+    try {
+      await cartService.removeItem(sno);
+      dispatch(fetchCartItems());
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to remove item from cart');
+    }
+  }
+);
+
+export const updateCartItemQuantity = createAsyncThunk(
+  'cart/updateCartItemQuantity',
+  async (
+    { sno, quantity }: { sno: number; quantity: number },
+    { dispatch, rejectWithValue }
+  ) => {
+    try {
+      await cartService.updateItemQuantity(sno, quantity);
+      dispatch(fetchCartItems());
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to update quantity');
+    }
+  }
+);
+
+// Slice
+export const cartSlice = createSlice({
+  name: 'cart',
+  initialState: {
+    cart: [],
+    loading: false,
+    error: null,
+  },
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchCartItems.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCartItems.fulfilled, (state, action) => {
+        state.loading = false;
+        state.cart = action.payload;
+      })
+      .addCase(fetchCartItems.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      .addCase(addItemToCart.rejected, (state, action) => {
+        state.error = action.payload as string;
+      })
+
+      .addCase(removeItemFromCart.rejected, (state, action) => {
+        state.error = action.payload as string;
+      })
+
+      .addCase(updateCartItemQuantity.rejected, (state, action) => {
+        state.error = action.payload as string;
+      });
+  },
+});
 
 export default cartSlice.reducer;

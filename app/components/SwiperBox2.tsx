@@ -10,33 +10,58 @@ import {
   Platform,
 } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
-import { COLORS, FONTS, SIZES } from '../constants/theme';
-import CheckoutItems from './CheckoutItems';
+import { COLORS, FONTS } from '../constants/theme';
 import { IMAGES } from '../constants/Images';
-
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-
-
 export default class SwiperBox2 extends Component {
+  _swipeableRow: any;
 
+  updateRef = (ref: any) => {
+    this._swipeableRow = ref;
+  };
 
-  rightSwipe = (progress: any, dragX: { interpolate: (arg0: { inputRange: number[]; outputRange: number[]; extrapolate: string; }) => any; }) => {
+  close = () => {
+    this._swipeableRow?.close();
+  };
+
+  rightSwipe = (progress: any, dragX: any) => {
     const scale = dragX.interpolate({
       inputRange: [45, 90],
       outputRange: [0, 1],
-      extrapolate: "clamp",
+      extrapolate: 'clamp',
     });
 
-
     return (
-      <TouchableOpacity onPress={() => { this.close(); this.props.handleDelete() }} activeOpacity={0.6}>
-        <View style={[styles.deleteBox, { backgroundColor: this.props.theme.dark ? COLORS.white : COLORS.primary }]}>
-          <Animated.View>
+      <TouchableOpacity
+        onPress={() => {
+          this.close();
+          this.props.handleDelete();
+        }}
+        activeOpacity={0.6}
+      >
+        <View
+          style={[
+            styles.deleteBox,
+            {
+              backgroundColor: this.props.theme.dark
+                ? COLORS.white
+                : COLORS.primary,
+            },
+          ]}
+        >
+          <Animated.View style={{ transform: [{ scale }] }}>
             <Image
-              style={{ height: 20, width: 20, resizeMode: 'contain', tintColor: this.props.theme.dark ? COLORS.primary : COLORS.white }}
               source={IMAGES.delete}
+              style={{
+                height: 20,
+                width: 20,
+                resizeMode: 'contain',
+                tintColor: this.props.theme.dark
+                  ? COLORS.primary
+                  : COLORS.white,
+              }}
             />
           </Animated.View>
         </View>
@@ -44,105 +69,179 @@ export default class SwiperBox2 extends Component {
     );
   };
 
-  updateRef = (ref: any) => {
-    this._swipeableRow = ref;
+  getFirstImage = (imagePathString: string) => {
+    try {
+      const parsed = JSON.parse(imagePathString);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed[0].startsWith('http')
+          ? parsed[0]
+          : `https://app.bmgjewellers.com${parsed[0]}`;
+      }
+    } catch (e) {
+      console.warn('Failed to parse ImagePath:', e);
+    }
+    return null;
   };
-  close = () => {
-    this._swipeableRow.close();
-  };
-  _swipeableRow: any;
 
   render() {
+    const { data, colors, theme, onPress } = this.props;
+    const product = data?.fullDetails || data;
+
+    const title = product?.ITEMNAME?.trim() || 'Unnamed Product';
+    const price = product?.GrandTotal ? `₹${parseFloat(product.GrandTotal).toFixed(2)}` : '₹0';
+    const imageUri = this.getFirstImage(product?.ImagePath || '');
+
+    const tagKey = product?.TAGKEY || 'N/A';
+    const grswt = product?.GRSWT?.toFixed(3) || '0.000';
+    const purity = product?.PURITY?.toFixed(2) || '0.00';
+
+    const sno = product?.SNO;
 
     return (
       <Swipeable
         ref={this.updateRef}
         friction={2}
-        renderRightActions={this.rightSwipe}>
-          <View
-                style={[{
-                    shadowColor:'rgba(195, 123, 95, 0.25)',
-                    shadowOffset: {
-                        width: 2,
-                        height: 20,
-                    },
-                    shadowOpacity: .1,
-                    shadowRadius: 5,
-                    //position: 'absolute',
-                }, Platform.OS === 'ios' && {
-                    backgroundColor: this.props.colors.card,
-                }]}
-            >
-              <View
-                  style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 10,
-                      // marginTop: 15,
-                      backgroundColor:this.props.colors.card,
-                      borderRadius:20,
-                      padding:10,
-                      paddingLeft:0,
-                      marginHorizontal:15,
-                      marginBottom:20
-                  }}
-              >
-                  <View>
-                      <Image
-                          style={{ height:null, width:150,aspectRatio:1/1,resizeMode:'contain'}}
-                          source={this.props.data.image}
-                      />
-                  </View>
-                  <View style={{flex:1}}>
-                      <TouchableOpacity
-                          onPress={() => this.props.navigation.navigate('ProductDetails')}
-                      >
-                          <Text style={{ ...FONTS.Marcellus, fontSize: 18, color:this.props.colors.title }}>{this.props.data.title}</Text>
-                      </TouchableOpacity>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 5 }}>
-                          <Text style={{ ...FONTS.Marcellus, fontSize: 16, color:this.props.colors.title, }}>{this.props.data.price}</Text>
-                          <Text
-                              style={{
-                                  ...FONTS.Marcellus,
-                                  fontSize: 14,
-                                  textDecorationLine: 'line-through',
-                                  textDecorationColor: 'rgba(0, 0, 0, 0.70)',
-                                  color: this.props.theme.dark ? 'rgba(255,255,255,0.7)' : 'rgba(0, 0, 0, 0.70)',
-                                  marginRight: 5
-                              }}>{this.props.data.discount}
-                          </Text>
-                          <Image
-                              style={{ height: 12, width: 12, resizeMode: 'contain', }}
-                              source={IMAGES.star4}
-                          />
-                          <Text style={{ ...FONTS.fontRegular, fontSize: 12, color: this.props.theme.dark ? 'rgba(255,255,255,0.5)' : 'rgba(0, 0, 0, 0.50)' }}>(2k Review)</Text>
-                      </View>
-                      <View style={{ marginTop: 10 }}>
-                          <CheckoutItems />
-                      </View>
-                  </View>
-              </View>  
+        renderRightActions={this.rightSwipe}
+        rightThreshold={40}
+      >
+        <TouchableOpacity
+          onPress={() => {
+            if (onPress && sno) {
+              onPress(sno);
+            }
+          }}
+          activeOpacity={0.8}
+          style={[styles.container, Platform.OS === 'ios' && { backgroundColor: colors.card }]}
+        >
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
+            <View style={styles.imageContainer}>
+              <Image
+                source={imageUri ? { uri: imageUri } : IMAGES.placeholder}
+                style={styles.productImage}
+              />
             </View>
+
+            <View style={styles.detailsContainer}>
+              <Text
+                style={[styles.title, { color: colors.title }]}
+                numberOfLines={2}
+                ellipsizeMode="tail"
+              >
+                {title}
+              </Text>
+
+              <View style={styles.priceContainer}>
+                <Text style={[styles.price, { color: colors.title }]}>
+                  {price}
+                </Text>
+              </View>
+
+              <View style={styles.metaContainer}>
+                <View style={styles.metaRow}>
+                  <Text style={[styles.metaLabel, { color: colors.text }]}>
+                    Tag No:
+                  </Text>
+                  <Text style={[styles.metaValue, { color: colors.text }]}>
+                    {tagKey}
+                  </Text>
+                </View>
+
+                <View style={styles.metaRow}>
+                  <Text style={[styles.metaLabel, { color: colors.text }]}>
+                    GR.WT:
+                  </Text>
+                  <Text style={[styles.metaValue, { color: colors.text }]}>
+                    {grswt}g
+                  </Text>
+                </View>
+
+                <View style={styles.metaRow}>
+                  <Text style={[styles.metaLabel, { color: colors.text }]}>
+                    Purity:
+                  </Text>
+                  <Text style={[styles.metaValue, { color: colors.text }]}>
+                    {purity}%
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
       </Swipeable>
     );
   }
-};
+}
+
 const styles = StyleSheet.create({
   container: {
-    height: 80,
-    width: SCREEN_WIDTH,
+    shadowColor: 'rgba(195, 123, 95, 0.25)',
+    shadowOffset: { width: 2, height: 20 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+    marginBottom: 20,
+  },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 20,
+    padding: 15,
+    marginHorizontal: 15,
+    overflow: 'hidden',
+  },
+  imageContainer: {
+    marginRight: 15,
+  },
+  productImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 12,
+    resizeMode: 'cover',
+  },
+  detailsContainer: {
+    flex: 1,
     justifyContent: 'center',
-    padding: 20,
+  },
+  title: {
+    ...FONTS.Marcellus,
+    fontSize: 18,
+    lineHeight: 24,
+    marginBottom: 5,
+  },
+  priceContainer: {
+    marginBottom: 10,
+  },
+  price: {
+    ...FONTS.Marcellus,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  metaContainer: {
+    marginTop: 5,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  metaLabel: {
+    ...FONTS.Marcellus,
+    fontSize: 14,
+    fontWeight: '500',
+    marginRight: 6,
+    minWidth: 60,
+  },
+  metaValue: {
+    ...FONTS.Marcellus,
+    fontSize: 14,
   },
   deleteBox: {
-    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    width: 50,
-    height: 160,
-    right: 0,
-    top:0,
-    borderTopLeftRadius: 20,
-    borderBottomLeftRadius: 20
+    width: 70,
+    height: '100%',
+    borderTopRightRadius: 20,
+    borderBottomRightRadius: 20,
+    marginRight: 15,
   },
 });

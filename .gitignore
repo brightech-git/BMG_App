@@ -34,4 +34,7 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# Native project folders - ignore if using Prebuild (CNG)
+android/
+ios/
 

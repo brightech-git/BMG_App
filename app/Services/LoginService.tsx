@@ -20,18 +20,16 @@ export const loginUser = async (userData: LoginPayload) => {
       };
     }
 
-    const responseBody = await response.json();
+    const data = await response.json(); // No `.body` — your API returns the object directly
 
-    if (!response.ok || responseBody.body?.error) {
+    if (!response.ok) {
       throw {
         type: 'LOGIN_FAILED',
-        message: responseBody.body?.error || 'Login failed',
+        message: data.message || 'Login failed',
       };
     }
 
-    const data = responseBody.body;
-
-    // Store in AsyncStorage
+    // Store values in AsyncStorage
     await AsyncStorage.setItem('user_id', data.id.toString());
     await AsyncStorage.setItem('user_token', data.token);
     await AsyncStorage.setItem('user_name', data.username);
@@ -40,25 +38,23 @@ export const loginUser = async (userData: LoginPayload) => {
     await AsyncStorage.setItem('user_roles', JSON.stringify(data.roles));
     await AsyncStorage.setItem('user_data', JSON.stringify(data));
 
-    console.log("User Name:", data.username);
+    console.log("User logged in:", data.username);
+    console.log("User token:", data.token);
     return data;
   } catch (error: any) {
+    console.error("Login error:", error);
     throw error;
   }
 };
 
-
-/**
- * Logs out the user by clearing all stored credentials.
- */
 export const logoutUser = async () => {
   try {
     const keys = await AsyncStorage.getAllKeys();
-    const keysToKeep = ['alreadyLaunched'];
+    const keysToKeep = ['alreadyLaunched']; // Optional: keep any app-level flags
     const keysToRemove = keys.filter(key => !keysToKeep.includes(key));
 
     await AsyncStorage.multiRemove(keysToRemove);
-    console.log('User data cleared but kept: alreadyLaunched');
+    console.log('User logged out: credentials cleared');
   } catch (error) {
     console.error('Logout error:', error);
     throw {

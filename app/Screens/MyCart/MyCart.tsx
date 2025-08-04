@@ -1,224 +1,221 @@
-import React,{useState} from 'react'
-import { View, Text, SafeAreaView,LayoutAnimation, Platform } from 'react-native'
-import { useNavigation, useTheme } from '@react-navigation/native'
-
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import {
+  View,
+  Text,
+  SafeAreaView,
+  Platform,
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
+} from 'react-native';
+import { useTheme, useFocusEffect } from '@react-navigation/native';
 import { COLORS, FONTS } from '../../constants/theme';
-import { GlobalStyleSheet } from '../../constants/StyleSheet';
 import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
-import Button from '../../components/Button/Button';
-import Header from '../../layout/Header';
-import SwiperBox2 from '../../components/SwiperBox2';
-import { IMAGES } from '../../constants/Images';
-import { StackScreenProps } from '@react-navigation/stack';
-import { RootStackParamList } from '../../Navigations/RootStackParamList';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeFromCart } from '../../redux/reducer/cartReducer';
-import {Feather} from "@expo/vector-icons";
+import { Feather } from '@expo/vector-icons';
 
-const CardStyleData = [
-    {
-        image: IMAGES.item11,
-        title: "Skin Care Body Product",
-        price: "$80",
-        discount: "$95",
-        review: "(2k Review)",
-    },
-    {
-        image: IMAGES.item12,
-        title: "Skin Care Body Product",
-        price: "$80",
-        discount: "$95",
-        review: "(2k Review)",
-        text: "FREE"
-    },
-    {
-        image: IMAGES.item32,
-        title: "Skin Care Body Product",
-        price: "$80",
-        discount: "$95",
-        review: "(2k Review)",
-        text: "FREE"
-    },
-    {
-        image: IMAGES.item34,
-        title: "Skin Care Body Product",
-        price: "$80",
-        discount: "$95",
-        review: "(2k Review)",
-        text: "FREE"
-    },
-    {
-        image: IMAGES.item38,
-        title: "Skin Care Body Product",
-        price: "$80",
-        discount: "$95",
-        review: "(2k Review)",
-        text: "FREE"
-    },
-    {
-        image: IMAGES.item11,
-        title: "Skin Care Body Product",
-        price: "$80",
-        discount: "$95",
-        review: "(2k Review)",
-    },
-    {
-        image: IMAGES.item12,
-        title: "Skin Care Body Product",
-        price: "$80",
-        discount: "$95",
-        review: "(2k Review)",
-        text: "FREE"
-    },
-    {
-        image: IMAGES.item32,
-        title: "Skin Care Body Product",
-        price: "$80",
-        discount: "$95",
-        review: "(2k Review)",
-        text: "FREE"
-    },
-    {
-        image: IMAGES.item34,
-        title: "Skin Care Body Product",
-        price: "$80",
-        discount: "$95",
-        review: "(2k Review)",
-        text: "FREE"
-    },
-    {
-        image: IMAGES.item38,
-        title: "Skin Care Body Product",
-        price: "$80",
-        discount: "$95",
-        review: "(2k Review)",
-        text: "FREE"
-    },
-]
+import Header from '../../layout/Header';
+import Button from '../../components/Button/Button';
+import SwiperBox2 from '../../components/SwiperBox2';
 
-type ShoppingScreenProps = StackScreenProps<RootStackParamList, 'MyCart'>;
+import { cartService, Product, CartItem } from '../../Services/CartService';
+import { fetchCartItems } from '../../redux/reducer/cartReducer';
 
-const Shopping = ({navigation} : ShoppingScreenProps) => {
+type CartItemWithDetails = CartItem & {
+  fullDetails: Product;
+};
 
-    const theme = useTheme();
-    const { colors }:{colors : any} = theme;
+const Shopping = ({ navigation }: any) => {
+  const theme = useTheme();
+  const { colors } = theme;
+  const dispatch = useDispatch();
 
-    const cart = useSelector((state:any) => state.cart.cart);
+  const cartItems = useSelector((state: any) => state.cart?.items || []);
+  const [cartProducts, setCartProducts] = useState<CartItemWithDetails[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-    const dispatch = useDispatch();
+  const fetchCartProducts = async () => {
+    try {
+      setLoading(true);
+      setRefreshing(true);
 
-    const removeItemFromCart = (data: any) => {
-        dispatch(removeFromCart(data));
+      const [detailedProducts, cartItems] = await Promise.all([
+        cartService.getDetailedCartProducts(),
+        cartService.getItemsByPhone(),
+      ]);
+
+      const merged: CartItemWithDetails[] = cartItems
+        .map((item) => {
+          const product = detailedProducts.find((p) => p.SNO === item.itemTagSno);
+          if (!product) return null;
+          return { ...item, fullDetails: product };
+        })
+        .filter((item): item is CartItemWithDetails => item !== null);
+
+      setCartProducts(merged);
+    } catch (err) {
+      console.error('❌ Error loading cart data:', err);
+      Alert.alert('Error', 'Failed to load cart items.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
+  };
 
-   // const navigation = useNavigation();
+  useFocusEffect(
+    useCallback(() => {
+      fetchCartProducts();
+      dispatch(fetchCartItems());
+    }, [dispatch])
+  );
 
-    return (
-        <SafeAreaView style={{ backgroundColor: colors.background, flex: 1 }}>
-            <Header
-                title={'My Cart'}
-                rightIcon2={'search'}
-                leftIcon={'back'}
+  const onRefresh = useCallback(() => {
+    fetchCartProducts();
+    dispatch(fetchCartItems());
+  }, [dispatch]);
+
+  const handleRemove = async (item: CartItemWithDetails) => {
+    try {
+      await cartService.removeItem(item.sno);
+      fetchCartProducts();
+      dispatch(fetchCartItems());
+    } catch (err) {
+      Alert.alert('Error', 'Failed to remove item from cart.');
+    }
+  };
+
+  const getImageUrl = (imagePath?: string): string => {
+    try {
+      if (!imagePath || imagePath.length < 5) return 'https://via.placeholder.com/150';
+      const parsed = JSON.parse(imagePath);
+      let image = parsed?.[0] || '';
+      if (!image || typeof image !== 'string') return 'https://via.placeholder.com/150';
+      if (!image.startsWith('http')) {
+        image = `https://app.bmgjewellers.com${image}`;
+      }
+      return image;
+    } catch (err) {
+      console.warn('🟡 Image parse error:', err);
+      return 'https://via.placeholder.com/150';
+    }
+  };
+
+  const subtotal = useMemo(() => {
+    return cartProducts.reduce((acc, item) => {
+      const price = parseFloat(item?.fullDetails?.GrandTotal || '0');
+      return acc + price;
+    }, 0);
+  }, [cartProducts]);
+
+  return (
+    <SafeAreaView style={{ backgroundColor: colors.background, flex: 1 }}>
+      <Header title="My Cart" leftIcon="back" rightIcon2="search" />
+
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 160 }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[COLORS.primary]}
+              tintColor={COLORS.primary}
             />
-            <GestureHandlerRootView style={{ flex: 1 }}>
-                <ScrollView 
-                    contentContainerStyle={{paddingBottom:150}}
-                    showsVerticalScrollIndicator={false}
-                >
-                    <View style={{ paddingTop: 20, paddingBottom: 5 }}>
-                        {cart.map((data:any, index:any) => {
-                            return (
-                                <View
-                                    key={index}
-                                >
-                                    <SwiperBox2 
-                                        data={data} 
-                                        navigation={navigation} 
-                                        theme={theme} 
-                                        colors={colors} 
-                                        handleDelete={() => removeItemFromCart(data)} 
-                                    />
-                                </View>
-                            )
-                        })}
-                    </View>
-                </ScrollView>
-            </GestureHandlerRootView>
-            {cart.length > 0 ?
-                (
-                    <View
-                        style={[{
-                            shadowColor:'rgba(195, 123, 95, 0.25)',
-                            shadowOffset: {
-                                width: 2,
-                                height: -20,
-                            },
-                            shadowOpacity: .1,
-                            shadowRadius: 5,
-                            //position: 'absolute',
-                            left: 0,
-                            bottom: 0,
-                            right: 0,
-                        }, Platform.OS === 'ios' && {
-                            backgroundColor: colors.card,
-                        }]}
-                    >
-                        <View style={{ height:200, width: '100%', backgroundColor: colors.card, flex: 1, paddingHorizontal: 15, position: 'absolute', bottom: 0,paddingTop:10 ,borderTopLeftRadius:25,borderTopRightRadius:25}}>
-                            <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}>
-                                <Text style={{ ...FONTS.fontRegular, fontSize: 18, color: colors.title }}>Subtotal</Text>
-                                <Text style={{ ...FONTS.fontBold, fontSize: 18,color:colors.title}}> $3,599</Text>
-                            </View>
-                            <View style={[GlobalStyleSheet.container, { paddingHorizontal: 10, marginTop:10, paddingTop: 0 }]}>
-                                <Button
-                                    title={'Proceed to Buy (8 items)'}
-                                    btnRounded
-                                    color={COLORS.primary}
-                                    onPress={() => navigation.navigate('Checkout')}
-                                />
-                            </View>
-                        </View>
-                    
-                    </View>
-                )
-                :
-                (
-                    <View style={[GlobalStyleSheet.container,{padding:0,position:'absolute',left:0,right:0,bottom:0,top:20}]}>
-                        <View
-                            style={{
-                                flex:1,
-                                alignItems:'center',
-                                justifyContent:'center',
-                            }}
-                        >
-                            <View
-                                style={{
-                                    height:60,
-                                    width:60,
-                                    borderRadius:60,
-                                    alignItems:'center',
-                                    justifyContent:'center',
-                                    backgroundColor:COLORS.primaryLight,
-                                    marginBottom:20,
-                                }}
-                            >
-                                <Feather color={COLORS.primary} size={24} name='shopping-cart'/>
-                            </View>
-                            <Text style={{...FONTS.h5,color:colors.title,marginBottom:8}}>Your shopping-cart is Empty!</Text>    
-                            <Text
-                                style={{
-                                    ...FONTS.fontSm,
-                                    color:colors.text,
-                                    textAlign:'center',
-                                    paddingHorizontal:40,
-                                    //marginBottom:30,
-                                }}
-                            >Add Product to you favourite and shop now.</Text>
-                        </View>
-                    </View>
-                )
-            }
-        </SafeAreaView>
-    )
-}
+          }
+        >
+          <View style={{ paddingTop: 20 }}>
+            {loading && !refreshing ? (
+              <View style={{ alignItems: 'center', marginTop: 50 }}>
+                <ActivityIndicator size="large" color={COLORS.primary} />
+                <Text style={{ ...FONTS.fontRegular, color: colors.text, marginTop: 10 }}>
+                  Loading cart items...
+                </Text>
+              </View>
+            ) : cartProducts.length > 0 ? (
+              cartProducts.map((item) => {
+                const imageUri = getImageUrl(item.fullDetails?.ImagePath);
+                return (
+                  <SwiperBox2
+                    key={item.sno}
+                    data={item}
+                    navigation={navigation}
+                    theme={theme}
+                    colors={colors}
+                    handleDelete={() => handleRemove(item)}
+                    image={imageUri}
+                    onPress={() => {
+                      console.log('Clicked product SNO:', item.fullDetails?.SNO);
+                      navigation.navigate('ProductDetails', { sno: item.fullDetails?.SNO });
+                    }}
+                  />
 
-export default Shopping
+                );
+              })
+            ) : (
+              <View style={{ alignItems: 'center', marginTop: 100 }}>
+                <Feather name="shopping-cart" size={40} color={COLORS.primary} />
+                <Text style={{ ...FONTS.h5, color: colors.title, marginTop: 20 }}>
+                  Your shopping cart is empty.
+                </Text>
+                <Text style={{ ...FONTS.fontSm, color: colors.text, marginTop: 5 }}>
+                  Add items from your wishlist.
+                </Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </GestureHandlerRootView>
+
+      {cartProducts.length > 0 && !loading && (
+        <View
+          style={[
+            {
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: colors.card,
+              borderTopLeftRadius: 25,
+              borderTopRightRadius: 25,
+              paddingHorizontal: 20,
+              paddingVertical: 20,
+              shadowColor: 'rgba(195, 123, 95, 0.25)',
+              shadowOffset: { width: 2, height: -10 },
+              shadowOpacity: 0.1,
+              shadowRadius: 5,
+              elevation: 5,
+            },
+            Platform.OS === 'ios' && {
+              backgroundColor: colors.card,
+            },
+          ]}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              marginBottom: 10,
+            }}
+          >
+            <Text style={{ ...FONTS.fontRegular, fontSize: 18, color: colors.title }}>
+              Subtotal
+            </Text>
+            <Text style={{ ...FONTS.fontBold, fontSize: 18, color: colors.title }}>
+              ₹{subtotal.toFixed(2)}
+            </Text>
+          </View>
+          <Button
+            title={`Proceed to Buy (${cartProducts.length})`}
+            btnRounded
+            color={COLORS.primary}
+            onPress={() => navigation.navigate('Checkout')}
+          />
+        </View>
+      )}
+    </SafeAreaView>
+  );
+};
+
+export default Shopping;
