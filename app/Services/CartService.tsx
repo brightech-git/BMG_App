@@ -30,32 +30,47 @@ const getAuthData = async (): Promise<{ token: string; phone: string }> => {
 };
 
 export const cartService = {
-  getItemsByPhone: async (): Promise<CartItem[]> => {
+getItemsByPhone: async (): Promise<CartItem[]> => {
+  try {
+    const { token, phone } = await getAuthData();
+
+    const res = await fetch(`${API_BASE_URL}/cart/by-phone?phone=${phone}`, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (res.status === 204) return []; // No content
+
+    const text = await res.text();
+
+    if (!res.ok) throw new Error(text || 'Failed to fetch cart items');
+
+    // ✅ Safely check if response is valid JSON
+    let parsed: any;
     try {
-      const { token, phone } = await getAuthData();
+      parsed = JSON.parse(text);
+    } catch (err) {
+      if (text.includes('Your cart is empty')) {
+        // console.warn('🛒 Cart is empty.');
+        return [];
+      }
 
-      const res = await fetch(`${API_BASE_URL}/cart/by-phone?phone=${phone}`, {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (res.status === 204) return []; // No content
-
-      const text = await res.text();
-      if (!res.ok) throw new Error(text || 'Failed to fetch cart items');
-
-      const parsed = text ? JSON.parse(text) : null;
-
-      if (Array.isArray(parsed)) return parsed;
-      if (Array.isArray(parsed?.data)) return parsed.data;
-
-      console.warn('⚠️ Unexpected cart response format:', parsed);
-      return [];
-    } catch (error) {
-      console.error('❌ cartService.getItemsByPhone:', error);
-      return [];
+      console.error('❌ JSON parse error in cart:', err);
+      throw new Error('Unexpected response format from cart API');
     }
-  },
+
+    // ✅ Handle valid JSON structures
+    if (Array.isArray(parsed)) return parsed;
+    if (Array.isArray(parsed?.data)) return parsed.data;
+
+    console.warn('⚠️ Unexpected cart response structure:', parsed);
+    return [];
+  } catch (error) {
+    console.error('❌ cartService.getItemsByPhone:', error);
+    return [];
+  }
+},
+
 
   getDetailedCartProducts: async (): Promise<Product[]> => {
     try {

@@ -64,6 +64,7 @@ import Toggles from "../Screens/Shortcode/Toggles";
 
 //Providers
 import { UserProvider } from "../Context/ProfileContext";
+import { AddressProvider } from "../Context/AddressContext";
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -112,11 +113,12 @@ const StackNavigator = () => {
   return (
     <>
       <UserProvider>
-        <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-        <Stack.Navigator
-          initialRouteName={getInitialRouteName()}
-          screenOptions={{
-            headerShown: false,
+        <AddressProvider>
+          <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+          <Stack.Navigator
+            initialRouteName={getInitialRouteName()}
+            screenOptions={{
+              headerShown: false,
             cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
           }}
         >
@@ -176,6 +178,7 @@ const StackNavigator = () => {
           <Stack.Screen name="Tables" component={Tables} />
           <Stack.Screen name="Toggles" component={Toggles} />
         </Stack.Navigator>
+        </AddressProvider>
       </UserProvider>
     </>
   );

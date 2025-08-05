@@ -54,7 +54,7 @@ const ListwithiconData = [
             {
                 icon: IMAGES.map2,
                 title: "Saved Addresses",
-                navigate: 'SavedAddresses'
+                navigate: 'SaveAddress'
             },
             {
                 icon: IMAGES.translation,

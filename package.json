@@ -31,7 +31,9 @@
     "metro": "0.80.8",
     "metro-config": "0.80.8",
     "metro-resolver": "0.80.8",
+    "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-native": "0.74.5",
     "react-native-chart-kit": "^6.12.0",
     "react-native-collapsible": "^1.6.1",
     "react-native-drop-shadow": "^1.0.0",
@@ -48,9 +50,7 @@
     "react-native-svg": "15.2.0",
     "react-native-web": "~0.19.10",
     "react-redux": "^9.2.0",
-    "use-latest-callback": "^0.2.1",
-    "react": "18.2.0",
-    "react-native": "0.74.5"
+    "use-latest-callback": "^0.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",

@@ -106,6 +106,12 @@ export const IMAGES = {
 	item45: require('../assets/images/item/pic45.png'),
 	item46: require('../assets/images/item/pic46.png'),
 	item47: require('../assets/images/item/pic47.png'),
+	item48: require('../assets/images/item/oxidised.jpg'),
+	item49: require('../assets/images/item/bridal.jpg'),
+	item50: require('../assets/images/item/customized.jpg'),
+	item51: require('../assets/images/item/clearance.jpg'),
+	item52: require('../assets/images/item/kids.jpg'),
+	item53: require('../assets/images/item/mens.jpg'),
 
 	
 	itemDetails1: require('../assets/images/itemDetails/pic1.png'),
