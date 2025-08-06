@@ -114,7 +114,7 @@ const Shopping = ({ navigation }: any) => {
 
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ScrollView
-          contentContainerStyle={{ paddingBottom: 160 }}
+          contentContainerStyle={{ paddingBottom: 200 }}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -186,6 +186,7 @@ const Shopping = ({ navigation }: any) => {
               shadowOpacity: 0.1,
               shadowRadius: 5,
               elevation: 5,
+              paddingBottom: 100,
             },
             Platform.OS === 'ios' && {
               backgroundColor: colors.card,

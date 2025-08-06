@@ -28,6 +28,7 @@ import { RootState } from '../../redux/store';
 import { API_BASE_URL } from '../../Config/baseUrl';
 import { favoriteService } from '../../Services/FavouriteService';
 import { cartService } from '../../Services/CartService';
+import fallbackImage from '../../assets/images/item/pic6.png'
 
 type Props = StackScreenProps<RootStackParamList, 'ProductDetails'>;
 
@@ -35,6 +36,7 @@ const ProductDetails = ({ navigation, route }: Props) => {
   const theme = useTheme();
   const { colors }: { colors: any } = theme;
   const dispatch = useDispatch();
+  const [imageError, setImageError] = useState(false);
 
   const [product, setProduct] = useState<any>(null);
   const [activeSize, setActiveSize] = useState<string | null>(null);
@@ -199,14 +201,12 @@ const ProductDetails = ({ navigation, route }: Props) => {
         <View style={{ position: 'relative' }}>
           <Image
             style={{ width: '100%', aspectRatio: 1 / 1.2, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 }}
-            source={
-              selectedImage
-                ? { uri: selectedImage }
-                : require('../../assets/images/product/pic1.png')
-            }
+            source={imageError || !selectedImage ? fallbackImage : { uri: selectedImage }}
+            onError={() => setImageError(true)}
             resizeMode="cover"
           />
-          
+
+
           {/* Favorite Heart Button */}
           {/* <TouchableOpacity
             style={[
@@ -232,9 +232,9 @@ const ProductDetails = ({ navigation, route }: Props) => {
 
         {/* Thumbnails */}
         {Array.isArray(imageArray) && imageArray.length > 1 && (
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
             style={{ marginTop: 10, paddingHorizontal: 10 }}
             contentContainerStyle={{ paddingBottom: 10 }}
           >
@@ -254,7 +254,13 @@ const ProductDetails = ({ navigation, route }: Props) => {
                   source={{ uri }}
                   style={{ width: 70, height: 70, borderRadius: 10 }}
                   resizeMode="cover"
+                  onError={(e) => {
+                    e.currentTarget.setNativeProps({
+                      src: [fallbackImage],
+                    });
+                  }}
                 />
+
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -391,15 +397,15 @@ const ProductDetails = ({ navigation, route }: Props) => {
                 disabled={favoriteLoading}
               />
             </View>
-            
+
             {/* Cart Button */}
             <View style={styles.buttonContainer}>
               <Button
                 title={
-                  cartLoading 
-                    ? 'Adding...' 
-                    : isInCart 
-                      ? 'Go to Cart' 
+                  cartLoading
+                    ? 'Adding...'
+                    : isInCart
+                      ? 'Go to Cart'
                       : 'Add To Cart'
                 }
                 onPress={() => {
